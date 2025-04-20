@@ -116,12 +116,12 @@ def load_rivers(conn):
 def main():
     conn = connect_db()
     try:
-        load_towns(conn)
-        sleep(10)
-        load_pubs(conn)
-        sleep(10)
-        load_train_stations(conn)
-        sleep(10)
+        # load_towns(conn)
+        # sleep(10)
+        # load_pubs(conn)
+        # sleep(10)
+        # load_train_stations(conn)
+        # sleep(10)
         load_rivers(conn)
     finally:
         conn.close()

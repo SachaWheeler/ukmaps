@@ -12,6 +12,8 @@ cur = conn.cursor()
 
 # Fetch all pubs in the UK
 gdf = ox.geometries_from_place("United Kingdom", tags={"amenity": "pub"})
+# gdf = ox.pois_from_place("United Kingdom", tags={"amenity": "pub"})
+
 
 for idx, row in gdf.iterrows():
     if 'name' in row and row.geometry.geom_type == "Point":

@@ -2,7 +2,7 @@ import csv
 import folium
 
 csv_file = "csv/waitrose_pubs_2.csv"
-output_html = "waitrose_pubs_map_2.html"
+output_html = "html/waitrose_pubs_map_2.html"
 
 # Create map centered on UK
 m = folium.Map(location=[54.0, -2.0], zoom_start=6)

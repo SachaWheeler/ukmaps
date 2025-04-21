@@ -2,3 +2,5 @@ sql/dumps/
 sql/gb.osm.pbf
 __pycache__/
 config.py
+.~lock.*.csv#
+

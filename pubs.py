@@ -1,11 +1,12 @@
 import osmnx as ox
 import psycopg2
 from shapely.geometry import Point
+from config import PASSWORD
 
 conn = psycopg2.connect(
     dbname="ukmap",
     user="postgres",
-    password="thanatos",
+    password=PASSWORD,
     host="localhost"
 )
 cur = conn.cursor()

@@ -36,7 +36,7 @@ conn = psycopg2.connect(
 cur = conn.cursor()
 
 # --- Bounding Box conditions ---
-lat_max = 52
+lat_max = 52.2
 lon_max = -0.5
 
 # --- Query railway lines ---

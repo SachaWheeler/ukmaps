@@ -56,7 +56,7 @@ for waitrose_id, waitrose_name, lat, lon, geom in waitrose_data:
     # Query pubs for this Waitrose
     cur = conn.cursor()
     cur.execute("""
-        SELECT p.name, ST_Distance(w.geom, p.geom) AS dist_m
+        SELECT DISTINCT p.name, ST_Distance(w.geom, p.geom) AS dist_m
         FROM pubs p
         JOIN waitrose w ON w.id = %s
         WHERE ST_DWithin(p.geom, w.geom, 3000)

@@ -15,8 +15,8 @@ conn = psycopg2.connect(
 cur = conn.cursor()
 
 # --- Bounding Box conditions ---
-lat_max = 52.2053
-lon_max = -0.1
+lat_max = 52
+lon_max = -0.5
 
 # --- Query Waitrose locations (bounded) ---
 cur.execute("""
@@ -49,7 +49,7 @@ cur.execute("""
 aonb_geoms = cur.fetchall()
 
 # --- Create map centered roughly ---
-m = folium.Map(location=[51.5, -1.5], zoom_start=8)
+m = folium.Map(location=[51, -2.5], zoom_start=9)
 
 # --- For each Waitrose, find 5 closest pubs within 3 km ---
 for waitrose_id, waitrose_name, lat, lon, geom in waitrose_data:

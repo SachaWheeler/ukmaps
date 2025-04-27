@@ -183,12 +183,19 @@ for (geom_json,) in aonb_geoms:
 
 # Add points
 for _, row in points_df.iterrows():
-    print(row)
+    folium.Marker(
+        location=[row["lat"], row["lon"]],
+        icon=folium.Icon(color="orange", icon="star", prefix="fa"),
+        tooltip=row["name"],  # Hover label instead of popup
+    ).add_to(m)
+
+    """
     folium.Marker(
         location=[row["lat"], row["lon"]],
         icon=folium.Icon(color="orange", icon="star", prefix="fa"),  # Goldish star
         popup=row["name"],
     ).add_to(m)
+    """
 
 conn.close()
 

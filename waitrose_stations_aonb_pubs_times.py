@@ -4,6 +4,8 @@ import psycopg2
 from math import radians, sin, cos, sqrt, atan2
 import json
 from config import PASSWORD
+from shapely import wkt
+import geopandas as gpd
 
 
 # --- Haversine Distance Formula ---
@@ -38,11 +40,11 @@ cur = conn.cursor()
 
 # --- Bounding Box conditions ---
 lat_max = 52.2
-lon_max = 1
+lon_max = 1.5
 
 # London
 london_lat_min, london_lat_max = 51.28, 51.70  # lat_min, lat_max for London
-london_lon_min, london_lon_max = -0.53, 0.30   # lon_min, lon_max for London
+london_lon_min, london_lon_max = -0.53, 0.30  # lon_min, lon_max for London
 
 # --- Query railway lines ---
 cur.execute(
@@ -69,9 +71,7 @@ cur.execute(
           lon >= %s AND lon <= %s
       );
 """,
-    (lat_max, lon_max,
-     london_lat_min, london_lat_max,
-     london_lon_min, london_lon_max),
+    (lat_max, lon_max, london_lat_min, london_lat_max, london_lon_min, london_lon_max),
 )
 waitrose_data = cur.fetchall()
 
@@ -89,9 +89,7 @@ cur.execute(
           w.lon >= %s AND w.lon <= %s
       );
 """,
-    (lat_max, lon_max,
-     london_lat_min, london_lat_max,
-     london_lon_min, london_lon_max),
+    (lat_max, lon_max, london_lat_min, london_lat_max, london_lon_min, london_lon_max),
 )
 station_data = cur.fetchall()
 
@@ -109,12 +107,41 @@ cur.execute(
 aonb_geoms = cur.fetchall()
 
 
-# CSV of personla points
+# CSV of personal points
 points_df = pd.read_csv("points.csv")
 
+# Rivers
+cur.execute("""
+    SELECT name, ST_AsText(geom::geometry)
+    FROM rivers
+    WHERE ST_Y(ST_StartPoint(geom::geometry)) < %s
+      AND ST_X(ST_StartPoint(geom::geometry)) < %s;
+""", (lat_max, lon_max))
+
+rivers = cur.fetchall()
+
+# Convert rivers to GeoDataFrame
+names = []
+geometries = []
+
+for name, wkt_str in rivers:
+    names.append(name)
+    geometries.append(wkt.loads(wkt_str))
+
+rivers_gdf = gpd.GeoDataFrame({"name": names, "geometry": geometries}, crs="EPSG:4326")
 
 # --- Create map centered roughly ---
 m = folium.Map(location=[51, -2.5], zoom_start=9)
+
+# Add rivers as GeoJSON
+# folium.GeoJson(rivers_gdf, name="Rivers").add_to(m)
+# folium.LayerControl().add_to(m)
+folium.GeoJson(
+    rivers_gdf,
+    name="Rivers",
+    style_function=lambda x: {"color": "blue", "weight": 2, "opacity": 0.7},
+).add_to(m)
+
 
 # --- Plot Waitrose stores (Green) and include 5 closest pubs ---
 for waitrose_id, waitrose_name, lat, lon, geom in waitrose_data:

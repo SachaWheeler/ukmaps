@@ -38,7 +38,11 @@ cur = conn.cursor()
 
 # --- Bounding Box conditions ---
 lat_max = 52.2
-lon_max = -0.5
+lon_max = 1
+
+# London
+london_lat_min, london_lat_max = 51.28, 51.70  # lat_min, lat_max for London
+london_lon_min, london_lon_max = -0.53, 0.30   # lon_min, lon_max for London
 
 # --- Query railway lines ---
 cur.execute(
@@ -59,9 +63,15 @@ cur.execute(
     SELECT id, name, lat, lon, geom
     FROM waitrose
     WHERE lat < %s AND lon < %s
-      AND lat IS NOT NULL AND lon IS NOT NULL;
+      AND lat IS NOT NULL AND lon IS NOT NULL
+          AND NOT (
+          lat >= %s AND lat <= %s AND
+          lon >= %s AND lon <= %s
+      );
 """,
-    (lat_max, lon_max),
+    (lat_max, lon_max,
+     london_lat_min, london_lat_max,
+     london_lon_min, london_lon_max),
 )
 waitrose_data = cur.fetchall()
 
@@ -73,13 +83,19 @@ cur.execute(
     JOIN waitrose w ON ST_DWithin(s.geom, w.geom, 4000)
     WHERE w.lat < %s AND w.lon < %s
       AND s.lat IS NOT NULL AND s.lon IS NOT NULL
-      AND w.lat IS NOT NULL AND w.lon IS NOT NULL;
+      AND w.lat IS NOT NULL AND w.lon IS NOT NULL
+          AND NOT (
+          w.lat >= %s AND w.lat <= %s AND
+          w.lon >= %s AND w.lon <= %s
+      );
 """,
-    (lat_max, lon_max),
+    (lat_max, lon_max,
+     london_lat_min, london_lat_max,
+     london_lon_min, london_lon_max),
 )
 station_data = cur.fetchall()
 
-# --- Query AONB geometries ---
+# --- Query AONB (Area of Outstanding Natural Beauty) geometries ---
 cur.execute(
     """
     SELECT ST_AsGeoJSON(geom)
@@ -175,13 +191,13 @@ for (geom_json,) in aonb_geoms:
         folium.GeoJson(
             geojson,
             style_function=lambda feature: {
-                "fillOpacity": 0,
+                "fillOpacity": 0.2,
                 "color": "blue",
                 "weight": 2,
             },
         ).add_to(m)
 
-# Add points
+# Add personal points
 for _, row in points_df.iterrows():
     folium.Marker(
         location=[row["lat"], row["lon"]],

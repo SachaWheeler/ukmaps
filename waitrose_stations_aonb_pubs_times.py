@@ -46,6 +46,8 @@ lon_max = 1.5
 london_lat_min, london_lat_max = 51.28, 51.70  # lat_min, lat_max for London
 london_lon_min, london_lon_max = -0.53, 0.30  # lon_min, lon_max for London
 
+WAITROSE_STATION_DISTANCE = 2000
+
 # --- Query railway lines ---
 cur.execute(
     """
@@ -53,10 +55,15 @@ cur.execute(
     FROM planet_osm_line
     WHERE railway = 'rail'
       AND ST_Y(ST_Centroid(way)) < %s
-      AND ST_X(ST_Centroid(way)) < %s;
-""",
-    (lat_max, lon_max),
+      AND ST_X(ST_Centroid(way)) < %s
+      AND NOT (
+          ST_Y(ST_Centroid(way)) BETWEEN %s AND %s AND
+          ST_X(ST_Centroid(way)) BETWEEN %s AND %s
+      );
+    """,
+    (lat_max, lon_max, london_lat_min, london_lat_max, london_lon_min, london_lon_max),
 )
+
 railway_geoms = cur.fetchall()
 
 # --- Query Waitrose locations (bounded) ---
@@ -75,12 +82,12 @@ cur.execute(
 )
 waitrose_data = cur.fetchall()
 
-# --- Query Train Stations within 4 km of any Waitrose ---
+# --- Query Train Stations within WAITROSE_STATION_DISTANCE km of any Waitrose ---
 cur.execute(
-    """
+    f"""
     SELECT DISTINCT s.name, s.lat, s.lon
     FROM train_stations s
-    JOIN waitrose w ON ST_DWithin(s.geom, w.geom, 4000)
+    JOIN waitrose w ON ST_DWithin(s.geom, w.geom, {WAITROSE_STATION_DISTANCE})
     WHERE w.lat < %s AND w.lon < %s
       AND s.lat IS NOT NULL AND s.lon IS NOT NULL
       AND w.lat IS NOT NULL AND w.lon IS NOT NULL
@@ -111,12 +118,21 @@ aonb_geoms = cur.fetchall()
 points_df = pd.read_csv("points.csv")
 
 # Rivers
-cur.execute("""
+cur.execute(
+    """
     SELECT name, ST_AsText(geom::geometry)
     FROM rivers
-    WHERE ST_Y(ST_StartPoint(geom::geometry)) < %s
-      AND ST_X(ST_StartPoint(geom::geometry)) < %s;
-""", (lat_max, lon_max))
+    WHERE
+        ST_Y(ST_StartPoint(geom::geometry)) < %s AND
+        ST_X(ST_StartPoint(geom::geometry)) < %s AND
+        NOT (
+            ST_Y(ST_StartPoint(geom::geometry)) BETWEEN %s AND %s AND
+            ST_X(ST_StartPoint(geom::geometry)) BETWEEN %s AND %s
+        );
+""",
+    (lat_max, lon_max, london_lat_min, london_lat_max, london_lon_min, london_lon_max),
+)
+
 
 rivers = cur.fetchall()
 
@@ -241,6 +257,8 @@ for _, row in points_df.iterrows():
     """
 
 conn.close()
+
+# folium.LayerControl().add_to(m)
 
 # --- Save map ---
 m.save("waitrose_stations_aonb_pubs_map.html")

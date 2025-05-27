@@ -47,6 +47,7 @@ london_lat_min, london_lat_max = 51.28, 51.70  # lat_min, lat_max for London
 london_lon_min, london_lon_max = -0.53, 0.30  # lon_min, lon_max for London
 
 WAITROSE_STATION_DISTANCE = 2000
+WAITROSE_PUB_DISTANCE = 3000
 
 # --- Query railway lines ---
 cur.execute(
@@ -161,14 +162,14 @@ folium.GeoJson(
 
 # --- Plot Waitrose stores (Green) and include 5 closest pubs ---
 for waitrose_id, waitrose_name, lat, lon, geom in waitrose_data:
-    # Query 5 closest pubs within 3km for this Waitrose
+    # Query 5 closest pubs within  km for this Waitrose
     pub_cursor = conn.cursor()
     pub_cursor.execute(
-        """
+        f"""
         SELECT DISTINCT p.name, ST_Distance(w.geom, p.geom) AS dist_m
         FROM pubs p
         JOIN waitrose w ON w.id = %s
-        WHERE ST_DWithin(p.geom, w.geom, 3000)
+        WHERE ST_DWithin(p.geom, w.geom, {WAITROSE_PUB_DISTANCE})
         ORDER BY dist_m ASC
         LIMIT 5;
     """,
@@ -178,12 +179,12 @@ for waitrose_id, waitrose_name, lat, lon, geom in waitrose_data:
     pub_cursor.close()
 
     # Create popup text
-    popup_html = f"<b>{waitrose_name}</b><br><br><u>Nearby pubs within 3 km:</u><br>"
+    popup_html = f"<b>{waitrose_name}</b><br><br><u>Nearby pubs within {int(WAITROSE_PUB_DISTANCE / 1000)} km:</u><br>"
     if pubs_nearby:
         for pub_name, dist_m in pubs_nearby:
             popup_html += f"- {pub_name} ({round(dist_m)} m)<br>"
     else:
-        popup_html += "(No pubs found within 3 km)"
+        popup_html += f"(No pubs found within {int(WAITROSE_PUB_DISTANCE / 1000)} km)"
 
     folium.Marker(
         location=[lat, lon],
@@ -258,6 +259,7 @@ for _, row in points_df.iterrows():
 
 conn.close()
 
+# this is too heavy on the browser
 # folium.LayerControl().add_to(m)
 
 # --- Save map ---

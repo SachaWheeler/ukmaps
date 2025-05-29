@@ -119,45 +119,45 @@ aonb_geoms = cur.fetchall()
 points_df = pd.read_csv("points.csv")
 
 # Rivers
-cur.execute(
-    """
-    SELECT name, ST_AsText(geom::geometry)
-    FROM rivers
-    WHERE
-        ST_Y(ST_StartPoint(geom::geometry)) < %s AND
-        ST_X(ST_StartPoint(geom::geometry)) < %s AND
-        NOT (
-            ST_Y(ST_StartPoint(geom::geometry)) BETWEEN %s AND %s AND
-            ST_X(ST_StartPoint(geom::geometry)) BETWEEN %s AND %s
-        );
-""",
-    (lat_max, lon_max, london_lat_min, london_lat_max, london_lon_min, london_lon_max),
-)
-
-
-rivers = cur.fetchall()
-
-# Convert rivers to GeoDataFrame
-names = []
-geometries = []
-
-for name, wkt_str in rivers:
-    names.append(name)
-    geometries.append(wkt.loads(wkt_str))
-
-rivers_gdf = gpd.GeoDataFrame({"name": names, "geometry": geometries}, crs="EPSG:4326")
-
+# cur.execute(
+# """
+# SELECT name, ST_AsText(geom::geometry)
+# FROM rivers
+# WHERE
+# ST_Y(ST_StartPoint(geom::geometry)) < %s AND
+# ST_X(ST_StartPoint(geom::geometry)) < %s AND
+# NOT (
+# ST_Y(ST_StartPoint(geom::geometry)) BETWEEN %s AND %s AND
+# ST_X(ST_StartPoint(geom::geometry)) BETWEEN %s AND %s
+# );
+# """,
+# (lat_max, lon_max, london_lat_min, london_lat_max, london_lon_min, london_lon_max),
+# )
+#
+#
+# rivers = cur.fetchall()
+#
+# # Convert rivers to GeoDataFrame
+# names = []
+# geometries = []
+#
+# for name, wkt_str in rivers:
+# names.append(name)
+# geometries.append(wkt.loads(wkt_str))
+#
+# rivers_gdf = gpd.GeoDataFrame({"name": names, "geometry": geometries}, crs="EPSG:4326")
+#
 # --- Create map centered roughly ---
 m = folium.Map(location=[51, -2.5], zoom_start=9)
 
 # Add rivers as GeoJSON
 # folium.GeoJson(rivers_gdf, name="Rivers").add_to(m)
 # folium.LayerControl().add_to(m)
-folium.GeoJson(
-    rivers_gdf,
-    name="Rivers",
-    style_function=lambda x: {"color": "blue", "weight": 2, "opacity": 0.7},
-).add_to(m)
+# folium.GeoJson(
+# rivers_gdf,
+# name="Rivers",
+# style_function=lambda x: {"color": "blue", "weight": 2, "opacity": 0.7},
+# ).add_to(m)
 
 
 # --- Plot Waitrose stores (Green) and include 5 closest pubs ---

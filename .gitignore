@@ -6,3 +6,4 @@ config.py
 
 .env
 old
+points.csv

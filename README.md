@@ -9,3 +9,5 @@ I was looking for a place to live for a few months and wanted to find a place th
 - and close to a river
 
 Within a bounding box and showing my travel times from Home (London) and a few close friends' homes.
+
+Just a bit of fun to play with some data and see what I could find.
